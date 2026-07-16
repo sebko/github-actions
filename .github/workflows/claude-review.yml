@@ -1,0 +1,58 @@
+# Reusable: automated Claude review of a PR.
+# Callers trigger on pull_request and delegate here with `secrets: inherit`.
+# Gating (draft + skip-review label) lives here, so it's centralized: edit once,
+# every calling repo inherits it on the next PR.
+name: Claude Code Review
+
+on:
+  workflow_call:
+    secrets:
+      CLAUDE_CODE_OAUTH_TOKEN:
+        required: true
+
+jobs:
+  claude-review:
+    # Two ways to skip a given PR:
+    #   1. Open it as a draft  — drafts don't review; marking "ready" fires it once.
+    #   2. Add the `skip-review` label — skips even a ready PR (tooling/trivial PRs).
+    if: ${{ github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'skip-review') }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write # write: the review posts PR comments
+      issues: write
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Run Claude Code Review
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+
+          # Enable web tools (WebSearch/WebFetch) — disabled by default in the Action's
+          # PR-triggered mode. Must be lifted via `settings`, not `claude_args` (see
+          # anthropics/claude-code-action#690). The allow-list is a whitelist, so the
+          # file/git tools are re-listed alongside the web ones, and the two MCP posting
+          # tools MUST be present or the review runs but can't post (silent success).
+          settings: |
+            {
+              "permissions": {
+                "allow": [
+                  "WebSearch", "WebFetch", "Read", "Edit", "Write", "Bash", "Glob", "Grep",
+                  "mcp__github_comment__update_claude_comment",
+                  "mcp__github_inline_comment__create_inline_comment"
+                ]
+              }
+            }
+          # Maintains a progress/result comment so a silent run is still visible.
+          track_progress: true
+          plugin_marketplaces: 'https://github.com/anthropics/claude-code.git'
+          plugins: 'code-review@claude-code-plugins'
+          # Generic across repos: per-repo tuning lives in each repo's CLAUDE.md
+          # (and PRODUCT.md if present), which the review reads.
+          prompt: "/code-review:code-review ${{ github.repository }}/pull/${{ github.event.pull_request.number }} — anchor severity to this repo's CLAUDE.md and PRODUCT.md hard rules if present."

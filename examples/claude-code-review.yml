@@ -1,0 +1,14 @@
+# Caller: drop this at .github/workflows/claude-code-review.yml in a consuming repo.
+# This is the whole per-repo file — it never changes. All logic lives centrally in
+# sebko/github-actions/.github/workflows/claude-review.yml.
+name: Claude Code Review
+
+on:
+  pull_request:
+    # No `synchronize`: reviews once per PR lifecycle, not on every push.
+    types: [opened, ready_for_review, reopened]
+
+jobs:
+  review:
+    uses: sebko/github-actions/.github/workflows/claude-review.yml@v1
+    secrets: inherit
