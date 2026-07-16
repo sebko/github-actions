@@ -1,9 +1,0 @@
-name: hello3a
-on:
-  workflow_call:
-jobs:
-  h:
-    if: ${{ github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'skip-review') }}
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo hello3a-if-only

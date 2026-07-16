@@ -17,11 +17,9 @@ jobs:
     #   2. Add the `skip-review` label — skips even a ready PR (tooling/trivial PRs).
     if: ${{ github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'skip-review') }}
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write # write: the review posts PR comments
-      issues: write
-      id-token: write
+    # NOTE: permissions are granted by the CALLER job (see examples/). A called
+    # reusable workflow can't elevate above the caller's GITHUB_TOKEN, so the
+    # caller must grant: contents:read, pull-requests:write, issues:write, id-token:write.
 
     steps:
       - name: Checkout repository

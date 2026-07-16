@@ -28,6 +28,11 @@ on:
 
 jobs:
   review:
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+      id-token: write
     uses: sebko/github-actions/.github/workflows/claude-review.yml@v1
     secrets: inherit
 YAML
@@ -47,6 +52,12 @@ on:
 
 jobs:
   claude:
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read
     uses: sebko/github-actions/.github/workflows/claude-mention.yml@v1
     secrets: inherit
 YAML
