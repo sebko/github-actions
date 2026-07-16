@@ -19,13 +19,17 @@ jobs:
     # NOTE: permissions are granted by the CALLER job (see examples/). The caller
     # must grant: contents:read, pull-requests:write, issues:write, id-token:write, actions:read.
 
-    # NOTE: deliberately NO actions/checkout here. `issue_comment` events carry the
-    # DEFAULT branch as their ref, so a bare checkout lands on master — and Claude
-    # then can't commit a fix onto the PR's own branch, opening a stray PR against
-    # master instead. The action does its own clone and PR-branch handling, so let
-    # it. (Matches the official mention-workflow example, which has no checkout.)
-    # Only add a checkout if you need a repo-local skill from .claude/skills/.
     steps:
+      # REQUIRED. The action does NOT clone for itself — it needs a git repo in the
+      # workspace, then fetches the PR's own branch itself (git fetch origin
+      # --depth=20 <pr-branch>) and commits there. Removing this step fails the run
+      # with "fatal: not a git repository". The ref checked out here doesn't matter
+      # (issue_comment carries the default branch); the action re-points it.
+      - name: Checkout repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 1
+
       - name: Run Claude Code
         # SHA-pinned (tags are mutable). Dependabot bumps this + the trailing comment.
         uses: anthropics/claude-code-action@1298632ce7736903d02a1435002705aa2a594a6c # v1
