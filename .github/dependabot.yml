@@ -1,0 +1,12 @@
+# Keeps the SHA-pinned actions in the reusable workflows current.
+# Dependabot bumps `uses: ...@<sha> # vX` and updates the trailing comment.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "ci"
+    labels:
+      - "dependencies"
